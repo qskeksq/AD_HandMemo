@@ -8,11 +8,15 @@ import android.graphics.Path;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -107,31 +111,34 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    class DrawingBoard extends View {
+    class DrawingBoard extends View {  // 핵심은 일련의 과정을 매우 상세하게 파악해서 어디서 선언하고, 어디서 호출하고, 어디서 저장하고, 어디서 불러올지 섬세하게 다뤄주는 것!!
 
         Paint paint;
         Path path;
+        List<Path> pathes;
+        List<Paint> paints;
 
         public DrawingBoard(Context context){
             super(context);
-//            path = new Path();
+             pathes = new ArrayList<>();
+            paints = new ArrayList<>();
+            path = new Path(); // 초기화 -- 처음 쓰이는 path
+            paint = new Paint(); // 초기화
         }
-
-        // 붓을 만드는
-//        public void setPaint(Paint paint){
-//            this.paint = paint;
-//        }
 
         // 일단 그리는 일은 여기서 한다. 다른 일 하지 말 것!!
         @Override
-        public void onDraw(Canvas canvas){
-            path = new Path();
+        public void onDraw(Canvas canvas){ // 이 메소드는 가장 마지막에 호출되어 그림을 그려주는 역할을 한다. draw 가 여기 없으면 그려지지 않음.
+            path = new Path();  // 이해1 : 미리 만들어진 Path 객체가 없으면 터치 이벤트는 발생하지만 그림이 그려지지 않는다. 즉, 이미 만들어진 path 에 값을 넣어주는 형식이군
             paint = new Paint();
             paint.setColor(color);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(progress);
             paint.setAntiAlias(true);
-            canvas.drawPath(path, paint);
+            for(int i=0; i<pathes.size(); i++){
+                canvas.drawPath(pathes.get(i), paints.get(i));  // 결국 그려지는 것은 이곳이기 때문에 배열에 저장해 둔 path, paint 객체를 여기서 그려준다.
+            }
+            Log.i("Main", "onDraw");
         }
 
         // 움직일 때마다 계속 onTouchEvent 메소드가 호출되고, UP 까지 값을 계속 갱신해 주는 것이로군.
@@ -141,22 +148,33 @@ public class MainActivity extends AppCompatActivity {
             // 내가 터치한 좌표를 꺼낸다.
             float x = event.getX();
             float y = event.getY();
-
+            Log.i("Main", "Touch Event");
+//            path = new Path();  // 안됨
             switch (event.getAction()){
                 // DOWN 에서 만들어 진 것이 MOVE 에도 쓰여야 하기 때문에 전역 변수로 선언한다.
                 case MotionEvent.ACTION_DOWN:
+//                    canvas.drawPath(path, paint); // 안됨
                     path.moveTo(x,y);  // 그리지 않고 이동한다
-                    break;
+                    Log.i("Main", "ACTION_DOWN");
+                    return true;  // 이거는 뭐지
                 case MotionEvent.ACTION_MOVE:
                     path.lineTo(x,y);
-                    break;
-                case MotionEvent.ACTION_POINTER_UP:
-                    // 궁금하면 토스트로 띄워보면 되는군!!
-                    break;
+                    Log.i("Main", "ACTION_MOVE");
+                    return true;
+//                case MotionEvent.ACTION_POINTER_UP:
+//                    // 궁금하면 토스트로 띄워보면 되는군!!
+//                    break;
                 case MotionEvent.ACTION_UP:
                     path.lineTo(x,y);
+                    pathes.add(path); // 결국 마지막까지 그려진 path 와 paint 를 저장해 준다.
+                    paints.add(paint);
+                    Log.i("Main", "ACTION_UP");
                     break;
             }
+
+//            for(int i=0; i< pathes.size(); i++){   // 이곳은 그리는 곳이 아니다.
+//                canvas.drawPath(pathes.get(i), paint);
+//            }
 
             // 화면을 그린 후 화면을 갱신해서 반영해 준다.
             invalidate();
