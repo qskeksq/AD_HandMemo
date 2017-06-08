@@ -18,7 +18,7 @@ import android.widget.SeekBar;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class DrawBoard1 extends AppCompatActivity {
 
     FrameLayout layout;
     RadioGroup radioGroup;
@@ -45,12 +45,12 @@ public class MainActivity extends AppCompatActivity {
                 switch (checkedId){
                     case R.id.blue:
                         color = Color.BLUE;
-//                        MainActivity.this.makePath();
-                        MainActivity.this.board.invalidate();
+//                        DrawBoard1.this.makePath();
+                        DrawBoard1.this.board.invalidate();
                         break;
                     case R.id.red:
                         color = Color.RED;
-                        MainActivity.this.board.invalidate();
+                        DrawBoard1.this.board.invalidate();
                         break;
                 }
             }
@@ -96,8 +96,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 //            Toast.makeText(getBaseContext(), "확인", Toast.LENGTH_SHORT).show();
-            MainActivity.this.setStroke(progress);
-            MainActivity.this.board.invalidate();
+            DrawBoard1.this.setStroke(progress);
+            DrawBoard1.this.board.invalidate();
         }
 
         @Override
@@ -107,9 +107,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-//            MainActivity.this.board.invalidate();
+//            DrawBoard1.this.board.invalidate();
         }
     };
+
+    // TODO brush 와 path 세트로 만들어 주기
 
     class DrawingBoard extends View {  // 핵심은 일련의 과정을 매우 상세하게 파악해서 어디서 선언하고, 어디서 호출하고, 어디서 저장하고, 어디서 불러올지 섬세하게 다뤄주는 것!!
 
@@ -120,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
         public DrawingBoard(Context context){
             super(context);
+            Log.i("Main", "생성자");
              pathes = new ArrayList<>();
             paints = new ArrayList<>();
             path = new Path(); // 초기화 -- 처음 쓰이는 path
@@ -135,10 +138,28 @@ public class MainActivity extends AppCompatActivity {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(progress);
             paint.setAntiAlias(true);
+
+            // 찌그러지는 것 처리하기
+            paint.setStrokeJoin(Paint.Join.ROUND);  // 각 path 가 서로 만날 때 둥글게 연결함.
+            paint.setStrokeCap(Paint.Cap.ROUND); //
+            paint.setDither(true);  // 보정
+
             for(int i=0; i<pathes.size(); i++){
                 canvas.drawPath(pathes.get(i), paints.get(i));  // 결국 그려지는 것은 이곳이기 때문에 배열에 저장해 둔 path, paint 객체를 여기서 그려준다.
             }
             Log.i("Main", "onDraw");
+        }
+
+        private void setBrush(){
+            paint.setColor(color);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(progress);
+            paint.setAntiAlias(true);
+
+            // 찌그러지는 것 처리하기
+            paint.setStrokeJoin(Paint.Join.ROUND);  // 각 path 가 서로 만날 때 둥글게 연결함.
+            paint.setStrokeCap(Paint.Cap.ROUND); //
+            paint.setDither(true);  // 보정
         }
 
         // 움직일 때마다 계속 onTouchEvent 메소드가 호출되고, UP 까지 값을 계속 갱신해 주는 것이로군.
@@ -151,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i("Main", "Touch Event");
 //            path = new Path();  // 안됨
             switch (event.getAction()){
+                // TODO 이곳에 새로운 path 와 새로운 paint 를 생성해 줘야 하는 것이었다
                 // DOWN 에서 만들어 진 것이 MOVE 에도 쓰여야 하기 때문에 전역 변수로 선언한다.
                 case MotionEvent.ACTION_DOWN:
 //                    canvas.drawPath(path, paint); // 안됨
