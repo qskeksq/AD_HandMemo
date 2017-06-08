@@ -43,7 +43,7 @@ public class DrawBoard1 extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
                 switch (checkedId){
-                    case R.id.blue:
+                    case R.id.erase:
                         color = Color.BLUE;
 //                        DrawBoard1.this.makePath();
                         DrawBoard1.this.board.invalidate();
